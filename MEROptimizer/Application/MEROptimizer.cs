@@ -18,6 +18,7 @@ using LabApi.Features.Wrappers;
 using ProjectMER.Events.Arguments;
 using ProjectMER.Features.Objects;
 using ProjectMER.Events.Handlers;
+using LightSourceToy = AdminToys.LightSourceToy;
 #if EXILED
 using Exiled.Events.EventArgs.Player;
 #endif
@@ -26,6 +27,7 @@ namespace MEROptimizer.Application
   public class MEROptimizer
   {
     public static uint PrimitiveAssetId;
+    public static uint LightAssetId;
 
     private bool excludeCollidables;
 
@@ -140,6 +142,44 @@ namespace MEROptimizer.Application
     {
       optimizedSchematics.Clear();
     }
+    
+    Dictionary<LightSourceToy, bool> GetLightsToOptimize(
+      Transform parent,
+      List<Transform> parentToExclude,
+      Dictionary<LightSourceToy, bool> lights = null,
+      bool clusterChilds = true)
+    {
+      lights ??= new Dictionary<LightSourceToy, bool>();
+
+      for (int i = 0; i < parent.childCount; i++)
+      {
+        Transform child = parent.GetChild(i);
+        if (child == null || parentToExclude.Contains(child))
+          continue;
+
+        if (clusterChilds)
+        {
+          foreach (string name in excludedNamesForUnspawningDistantObjects)
+          {
+            if (child.name.Contains(name))
+            {
+              clusterChilds = false;
+              break;
+            }
+          }
+        }
+
+        if (excludedNames.Any(n => child.name.ToLower().Contains(n.ToLower())))
+          continue;
+
+        if (child.TryGetComponent(out LightSourceToy light))
+          lights.Add(light, clusterChilds);
+
+        GetLightsToOptimize(child, parentToExclude, lights, clusterChilds);
+      }
+
+      return lights;
+    }
 
     Dictionary<PrimitiveObjectToy, bool> GetPrimitivesToOptimize(Transform parent, List<Transform> parentToExclude,
       Dictionary<PrimitiveObjectToy, bool> primitives = null, bool clusterChilds = true)
@@ -244,12 +284,20 @@ namespace MEROptimizer.Application
 
       foreach (GameObject prefab in NetworkClient.prefabs.Values)
       {
-          if (prefab.TryGetComponent<PrimitiveObjectToy>(out _))
-          {
-              PrimitiveAssetId = prefab.GetComponent<NetworkIdentity>().assetId;
-              Logger.Debug("PrimitiveObjectToy AssetId successfully found.");
-              break;
-          }
+        if (prefab.TryGetComponent<PrimitiveObjectToy>(out _))
+        {
+          PrimitiveAssetId = prefab.GetComponent<NetworkIdentity>().assetId;
+          Logger.Debug("PrimitiveObjectToy AssetId successfully found.");
+        }
+
+        if (prefab.TryGetComponent<LightSourceToy>(out _))
+        {
+          LightAssetId = prefab.GetComponent<NetworkIdentity>().assetId;
+          Logger.Debug("LightSourceToy AssetId successfully found.");
+        }
+
+        if (PrimitiveAssetId != 0 && LightAssetId != 0)
+          break;
       }
 
       if (PrimitiveAssetId == 0)
@@ -325,6 +373,7 @@ namespace MEROptimizer.Application
               {
                 MEROptimizer.Debug($"Spawning all clusters (as a fade spawn) of {schematic.schematic.Name} to {player.DisplayName} because he spawned as a spectator (ssbadbs : {shouldSpectatorsBeAffectedByPDS})");
 
+                // Dans OnPlayerSpawned, remplace les blocs de spawn de cluster par :
                 foreach (PrimitiveCluster cluster in schematic.primitiveClusters)
                 {
                   if (cluster.instantSpawn)
@@ -333,8 +382,8 @@ namespace MEROptimizer.Application
                   }
                   else
                   {
-                    cluster.awaitingSpawn.Remove(player);
-                    cluster.awaitingSpawn.Add(player, cluster.primitives.ToList());
+                    // Correction ici : On utilise l'index
+                    cluster.awaitingSpawnIndex[player] = 0; 
                     cluster.spawning = true;
                   }
                 }
@@ -354,6 +403,7 @@ namespace MEROptimizer.Application
               {
                 MEROptimizer.Debug($"Spawning all clusters (as a fade spawn) of {schematic.schematic.Name} to {player.DisplayName} because he spawned as a tutorial and based on the specified config he should see all of the map (ssbadbs : {shouldSpectatorsBeAffectedByPDS})");
 
+                // Dans OnPlayerSpawned, remplace les blocs de spawn de cluster par :
                 foreach (PrimitiveCluster cluster in schematic.primitiveClusters)
                 {
                   if (cluster.instantSpawn)
@@ -362,11 +412,10 @@ namespace MEROptimizer.Application
                   }
                   else
                   {
-                    cluster.awaitingSpawn.Remove(player);
-                    cluster.awaitingSpawn.Add(player, cluster.primitives.ToList());
+                    // Correction ici : On utilise l'index
+                    cluster.awaitingSpawnIndex[player] = 0; 
                     cluster.spawning = true;
                   }
-
                 }
               }
             }
@@ -398,6 +447,7 @@ namespace MEROptimizer.Application
                 {
                   MEROptimizer.Debug($"Spawning all clusters (as a fade spawn) of {schematic.schematic.Name} to {player.DisplayName} because he spawned as a filmaker ( why ) and based on the specified config he should see all of the map (ssbadbs : {shouldSpectatorsBeAffectedByPDS})");
 
+                  // Dans OnPlayerSpawned, remplace les blocs de spawn de cluster par :
                   foreach (PrimitiveCluster cluster in schematic.primitiveClusters)
                   {
                     if (cluster.instantSpawn)
@@ -406,11 +456,10 @@ namespace MEROptimizer.Application
                     }
                     else
                     {
-                      cluster.awaitingSpawn.Remove(player);
-                      cluster.awaitingSpawn.Add(player, cluster.primitives.ToList());
+                      // Correction ici : On utilise l'index
+                      cluster.awaitingSpawnIndex[player] = 0; 
                       cluster.spawning = true;
                     }
-
                   }
                 }
               }
@@ -474,8 +523,16 @@ namespace MEROptimizer.Application
 
 
       Dictionary<PrimitiveObjectToy, bool> primitivesToOptimize = GetPrimitivesToOptimize(ev.Schematic.transform, parentsToExlude);
+      Dictionary<LightSourceToy, bool> lightsToOptimize = GetLightsToOptimize(ev.Schematic.transform, parentsToExlude);
 
-      if (primitivesToOptimize == null || primitivesToOptimize.IsEmpty()) return;
+      bool hasPrimitives = primitivesToOptimize != null && primitivesToOptimize.Count > 0;
+      bool hasLights = lightsToOptimize != null && lightsToOptimize.Count > 0;
+
+      Logger.Info($"[MERO] {ev.Schematic.Name}: primitives={primitivesToOptimize?.Count ?? 0}, lights={lightsToOptimize?.Count ?? 0}");
+
+      
+      if (!hasPrimitives && !hasLights)
+        return;
 
       Dictionary<ClientSidePrimitive, bool> clientSidePrimitive = new Dictionary<ClientSidePrimitive, bool>();
 
@@ -518,6 +575,37 @@ namespace MEROptimizer.Application
 
         primitivesToDestroy.Add(primitive);
       }
+      
+      Dictionary<ClientSideLight, bool> clientSideLights = new Dictionary<ClientSideLight, bool>();
+      List<LightSourceToy> lightsToDestroy = new List<LightSourceToy>();
+
+      foreach (LightSourceToy light in lightsToOptimize.Keys.ToList())
+      {
+        if (light == null)
+          continue;
+
+        Vector3 position = light.transform.position;
+        Quaternion rotation = light.transform.rotation;
+        Vector3 scale = light.transform.lossyScale;
+
+        clientSideLights.Add(new ClientSideLight(
+          position,
+          rotation,
+          scale,
+          light.NetworkLightIntensity,
+          light.NetworkLightRange,
+          light.NetworkLightColor,
+          light.NetworkShadowType,
+          light.NetworkShadowStrength,
+          light.NetworkLightType,
+          light.NetworkLightShape,
+          light.NetworkSpotAngle,
+          light.NetworkInnerSpotAngle,
+          0
+        ), lightsToOptimize[light]);
+
+        lightsToDestroy.Add(light);
+      }
 
       // Store the client side primitive / server side colliders
 
@@ -528,9 +616,16 @@ namespace MEROptimizer.Application
         distanceForClusterSpawn = customDistance;
       }
 
-      OptimizedSchematic schematic = new OptimizedSchematic(ev.Schematic, serverSideColliders, clientSidePrimitive,
-        hideDistantPrimitives, distanceForClusterSpawn, excludedNamesForUnspawningDistantObjects,
-        maxDistanceForPrimitiveCluster, maxPrimitivesPerCluster);
+      OptimizedSchematic schematic = new OptimizedSchematic(
+        ev.Schematic,
+        serverSideColliders,
+        clientSidePrimitive,
+        clientSideLights,
+        hideDistantPrimitives,
+        distanceForClusterSpawn,
+        excludedNamesForUnspawningDistantObjects,
+        maxDistanceForPrimitiveCluster,
+        maxPrimitivesPerCluster);
 
       optimizedSchematics.Add(schematic);
 
@@ -544,6 +639,12 @@ namespace MEROptimizer.Application
         //ev.Schematic._attachedBlocks.Remove(primitive.gameObject);
         GameObject.Destroy(primitive.gameObject);
       }
+      foreach (LightSourceToy light in lightsToDestroy)
+      {
+        if (light == null) continue;
+        //ev.Schematic._attachedBlocks.Remove(primitive.gameObject);
+        GameObject.Destroy(light.gameObject);
+      }
       Timing.CallDelayed(1f, () =>
       {
 
@@ -551,6 +652,25 @@ namespace MEROptimizer.Application
         schematic.schematicServerSidePrimitiveCount = ev.Schematic.GetComponentsInChildren<PrimitiveObjectToy>().Where(p => p != null).Count();
         schematic.schematicServerSidePrimitiveEmptiesCount = ev.Schematic.GetComponentsInChildren<PrimitiveObjectToy>().Where(p => p != null && p.PrimitiveFlags == PrimitiveFlags.None).Count();
 
+        int removed = 0;
+
+        var empties = ev.Schematic.GetComponentsInChildren<PrimitiveObjectToy>(true);
+
+        foreach (var primitive in empties)
+        {
+          if (primitive == null)
+            continue;
+
+          if (primitive.PrimitiveFlags == PrimitiveFlags.None &&
+              primitive.transform.childCount == 0)
+          {
+            GameObject.Destroy(primitive.gameObject);
+            removed++;
+          }
+        }
+
+        Logger.Info($"[MERO] Cleaned {removed} empty pivots (no children)");
+        
       });
 
       //DestroyPrimitives(ev.Schematic, primitivesToDestroy);

@@ -42,43 +42,66 @@ namespace MEROptimizer.Application.Components
     private void GenerateNetworkMessages()
     {
       NetworkWriterPooled writer = NetworkWriterPool.Get();
-      writer.Write<byte>(1);
-      writer.Write<byte>(67);
-      writer.Write<Vector3>(position);
-      writer.Write<Quaternion>(rotation);
-      writer.Write<Vector3>(scale);
-      writer.Write<byte>(0);
-      writer.Write<bool>(false);
-      writer.Write<int>((int)primitiveType);
-      writer.Write<Color>(color);
-      writer.Write<byte>((byte)(primitiveFlags));
-      writer.Write<uint>(0);
-
-      spawnMessage = new SpawnMessage()
+      try
       {
-        netId = netId,
-        isLocalPlayer = false,
-        isOwner = false,
-        sceneId = 0,
-        assetId = MEROptimizer.PrimitiveAssetId,
-        position = position,
-        rotation = rotation,
-        scale = scale,
-        payload = writer.ToArraySegment()
-      };
+        writer.Write<byte>(1);
+        writer.Write<byte>(67);
+        writer.WriteVector3(position); // Position
+        writer.WriteQuaternion(rotation); // Rotation
+        writer.WriteVector3(scale); // Scale
+        writer.WriteByte(0); // Movement Smoothing
+        writer.WriteBool(false); // IsStatic
+        writer.WriteInt((int)primitiveType); // Primitive Type
+        writer.WriteColor(color); // Color
+        writer.WriteByte((byte)(primitiveFlags)); // Primitive Flags
+        writer.WriteUInt(0); // ParentId
 
-      destroyMessage = new ObjectDestroyMessage()
+        // CRITIQUE : ToArray() crée une copie propre. 
+        // Ne jamais garder ToArraySegment() d'un writer retourné au pool.
+        byte[] payloadCopy = writer.ToArray(); 
+
+        spawnMessage = new SpawnMessage()
+        {
+          netId = netId,
+          isLocalPlayer = false,
+          isOwner = false,
+          sceneId = 0,
+          assetId = MEROptimizer.PrimitiveAssetId,
+          position = position,
+          rotation = rotation,
+          scale = scale,
+          payload = new ArraySegment<byte>(payloadCopy) // On utilise notre copie sécurisée
+        };
+
+        destroyMessage = new ObjectDestroyMessage()
+        {
+          netId = netId,
+        };
+      }
+      finally
       {
-        netId = netId,
-      };
+        // CRITIQUE : Retourner le writer au pool pour éviter la fuite de RAM
+        NetworkWriterPool.Return(writer); 
+      }
+    }
 
+    public void SpawnForEveryone()
+    {
+      foreach (Player player in Player.List)
+      {
+        if (player == null || player.IsHost || player.IsNpc || player.IsDummy) continue;
+        
+        player.Connection?.Send(spawnMessage);
+      }
     }
 
     public void DestroyForEveryone()
     {
-      foreach (Player player in Player.List.Where(p => p != null && !p.IsNpc && !p.IsDummy))
+      foreach (Player player in Player.List)
       {
-        DestroyClientPrimitive(player);
+        if (player == null || player.IsHost || player.IsNpc || player.IsDummy) continue;
+        
+        player.Connection?.Send(destroyMessage);
       }
     }
 
@@ -87,14 +110,6 @@ namespace MEROptimizer.Application.Components
       if (target == null || target.IsHost) return; // DO NOT SEND THIS TO THE DEDICATED OTHERWISE EVERYTHING WILL BROKE TRUST ME I LOST 3 MONTHS OF MY LIFE BECAUSE OF THIS
 
       target.Connection?.Send(destroyMessage);
-    }
-
-    public void SpawnForEveryone()
-    {
-      foreach (Player player in Player.List.Where(p => p != null && !p.IsNpc && !p.IsDummy))
-      {
-        SpawnClientPrimitive(player);
-      }
     }
 
     public void SpawnClientPrimitive(Player target)

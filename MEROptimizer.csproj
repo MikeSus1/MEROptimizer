@@ -12,6 +12,7 @@
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
+    <LangVersion>14</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -44,11 +45,15 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Include="MEROptimizer\Application\Commands\ClusterInfoCmd.cs" />
+    <Compile Include="MEROptimizer\Application\Commands\CountLightsCommand.cs" />
+    <Compile Include="MEROptimizer\Application\Commands\CountPrimCommand.cs" />
     <Compile Include="MEROptimizer\Application\Commands\DisablePluginCmd.cs" />
     <Compile Include="MEROptimizer\Application\Commands\DisplayClustersCmd.cs" />
     <Compile Include="MEROptimizer\Application\Commands\RealTimePrimitiveCountCmd.cs" />
     <Compile Include="MEROptimizer\Application\Commands\InfoCmd.cs" />
     <Compile Include="MEROptimizer\Application\Commands\DisplayPrimitivesCmd.cs" />
+    <Compile Include="MEROptimizer\Application\Commands\TestLightCommand.cs" />
+    <Compile Include="MEROptimizer\Application\Components\ClientSideLight.cs" />
     <Compile Include="MEROptimizer\Application\Components\ClientSidePrimitive.cs" />
     <Compile Include="MEROptimizer\Application\Components\OptimizedSchematic.cs" />
     <Compile Include="MEROptimizer\Application\Components\PlayerDisplayHint.cs" />
@@ -60,58 +65,32 @@
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
-    <Reference Include="Assembly-CSharp-firstpass">
-      <HintPath>deps\Assembly-CSharp-firstpass.dll</HintPath>
-    </Reference>
-    <Reference Include="Assembly-CSharp-Publicized">
-      <HintPath>deps\Assembly-CSharp-Publicized.dll</HintPath>
-    </Reference>
-    <Reference Include="CommandSystem.Core">
-      <HintPath>deps\CommandSystem.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="Exiled.API">
-      <HintPath>deps\Exiled.API.dll</HintPath>
-    </Reference>
-    <Reference Include="Exiled.CreditTags">
-      <HintPath>deps\Exiled.CreditTags.dll</HintPath>
-    </Reference>
-    <Reference Include="Exiled.CustomItems">
-      <HintPath>deps\Exiled.CustomItems.dll</HintPath>
-    </Reference>
-    <Reference Include="Exiled.CustomRoles">
-      <HintPath>deps\Exiled.CustomRoles.dll</HintPath>
-    </Reference>
-    <Reference Include="Exiled.Events">
-      <HintPath>deps\Exiled.Events.dll</HintPath>
-    </Reference>
-    <Reference Include="Exiled.Loader">
-      <HintPath>deps\Exiled.Loader.dll</HintPath>
-    </Reference>
-    <Reference Include="Exiled.Permissions">
-      <HintPath>deps\Exiled.Permissions.dll</HintPath>
-    </Reference>
-    <Reference Include="LabApi">
-      <HintPath>deps\LabApi.dll</HintPath>
-    </Reference>
-    <Reference Include="Mirror-Publicized">
-      <HintPath>deps\Mirror-Publicized.dll</HintPath>
-    </Reference>
-    <Reference Include="ProjectMER">
-      <HintPath>deps\ProjectMER.dll</HintPath>
-    </Reference>
+    <Reference Include="0Harmony" HintPath="$(HEAVEN_REFERENCES)\0Harmony.dll" Private="false" />
+    <Reference Include="Assembly-CSharp" HintPath="$(HEAVEN_REFERENCES)\Assembly-CSharp-Publicized.dll" Private="false" />
+    <Reference Include="Assembly-CSharp-firstpass" HintPath="$(HEAVEN_REFERENCES)\Assembly-CSharp-firstpass.dll" Private="false" />
+    <Reference Include="AudioPlayerApi" HintPath="$(HEAVEN_REFERENCES)\AudioPlayerApi.dll" Private="false" />
+    <Reference Include="CommandSystem.Core" HintPath="$(HEAVEN_REFERENCES)\CommandSystem.Core.dll" Private="false" />
+    <Reference Include="HintServiceMeow" HintPath="$(HEAVEN_REFERENCES)\HintServiceMeow.dll" Private="false" />
+    <Reference Include="LabApi" HintPath="$(HEAVEN_REFERENCES)\LabApi.dll" Private="false" />
+    <Reference Include="MEROptimizer" HintPath="$(HEAVEN_REFERENCES)\MEROptimizer.dll" Private="false" />
+    <Reference Include="Mirror" HintPath="$(HEAVEN_REFERENCES)\Mirror-Publicized.dll" Private="false" />
+    <Reference Include="NorthwoodLib" HintPath="$(HEAVEN_REFERENCES)\NorthwoodLib.dll" Private="false" />
+    <Reference Include="Pooling" HintPath="$(HEAVEN_REFERENCES)\Pooling.dll" Private="false" />
+    <Reference Include="ProjectMER" HintPath="$(HEAVEN_REFERENCES)\ProjectMER.dll" Private="false" />
+    <Reference Include="SCPSLAudioApi" HintPath="$(HEAVEN_REFERENCES)\SCPSLAudioApi.dll" Private="false" />
+    <Reference Include="SemVer" HintPath="$(HEAVEN_REFERENCES)\SemVer.dll" Private="false" />
     <Reference Include="System" />
-    <Reference Include="UnityEngine">
-      <HintPath>deps\UnityEngine.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.AnimationModule">
-      <HintPath>deps\UnityEngine.AnimationModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.CoreModule">
-      <HintPath>deps\UnityEngine.CoreModule.dll</HintPath>
-    </Reference>
-    <Reference Include="UnityEngine.PhysicsModule">
-      <HintPath>deps\UnityEngine.PhysicsModule.dll</HintPath>
-    </Reference>
+    <Reference Include="Unity.TextMeshPro" HintPath="$(HEAVEN_REFERENCES)\Unity.TextMeshPro.dll" Private="false" />
+    <Reference Include="UnityEngine" HintPath="$(HEAVEN_REFERENCES)\UnityEngine.dll" Private="false" />
+    <Reference Include="UnityEngine.AIModule" HintPath="$(HEAVEN_REFERENCES)\UnityEngine.AIModule.dll" Private="false" />
+    <Reference Include="UnityEngine.AnimationModule" HintPath="$(HEAVEN_REFERENCES)\UnityEngine.AnimationModule.dll" Private="false" />
+    <Reference Include="UnityEngine.AudioModule" HintPath="$(HEAVEN_REFERENCES)\UnityEngine.AudioModule.dll" Private="false" />
+    <Reference Include="UnityEngine.CoreModule" HintPath="$(HEAVEN_REFERENCES)\UnityEngine.CoreModule.dll" Private="false" />
+    <Reference Include="UnityEngine.PhysicsModule" HintPath="$(HEAVEN_REFERENCES)\UnityEngine.PhysicsModule.dll" Private="false" />
+    <Reference Include="UnityEngine.TerrainModule" HintPath="$(HEAVEN_REFERENCES)\UnityEngine.TerrainModule.dll" Private="false" />
+    <Reference Include="websocket-sharp" HintPath="$(HEAVEN_REFERENCES)\websocket-sharp.dll" Private="false" />
+    <Reference Include="YamlDotNet" HintPath="$(HEAVEN_REFERENCES)\YamlDotNet.dll" Private="false" />
+    <Reference Include="BoneMapper" HintPath="$(HEAVEN_REFERENCES)\BoneMapper.dll" Private="false" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>

@@ -22,6 +22,7 @@ namespace MEROptimizer.Application.Components
     public List<Collider> colliders { get; set; }
 
     public List<ClientSidePrimitive> nonClusteredPrimitives { get; set; }
+    public List<ClientSideLight> nonClusteredLights { get; set; }
 
     public List<PrimitiveCluster> primitiveClusters { get; set; }
 
@@ -43,12 +44,17 @@ namespace MEROptimizer.Application.Components
       return count;
     }
 
-    public OptimizedSchematic(SchematicObject schematic, List<Collider> colliders, Dictionary<ClientSidePrimitive, bool> primitives,
-      bool doClusters = false, float distance = 50, List<string> excludedUnspawnObjects = null, float maxDistanceForPrimitiveCluster = 2.5f,
+    public OptimizedSchematic(
+      SchematicObject schematic,
+      List<Collider> colliders,
+      Dictionary<ClientSidePrimitive, bool> primitives,
+      Dictionary<ClientSideLight, bool> lights,
+      bool doClusters = false,
+      float distance = 50,
+      List<string> excludedUnspawnObjects = null,
+      float maxDistanceForPrimitiveCluster = 2.5f,
       int maxPrimitivesPerCluster = 100)
     {
-
-
       this.schematic = schematic;
       this.colliders = colliders;
       spawnTime = DateTime.Now;
@@ -56,25 +62,57 @@ namespace MEROptimizer.Application.Components
       schematicName = schematic.name;
 
       nonClusteredPrimitives = new List<ClientSidePrimitive>();
+      nonClusteredLights = new List<ClientSideLight>();
       primitiveClusters = new List<PrimitiveCluster>();
 
-      GenerateClustersAndSpawn(doClusters, primitives, distance, excludedUnspawnObjects, maxDistanceForPrimitiveCluster, maxPrimitivesPerCluster);
-
+      GenerateClustersAndSpawn(
+        doClusters,
+        primitives,
+        lights,
+        distance,
+        excludedUnspawnObjects,
+        maxDistanceForPrimitiveCluster,
+        maxPrimitivesPerCluster);
     }
 
-    private void GenerateClustersAndSpawn(bool doClusters, Dictionary<ClientSidePrimitive, bool> primitives,
-      float distance, List<string> excludedUnspawnObjects, float maxDistanceForPrimitiveCluster, int maxPrimitivesPerCluster)
+    private void GenerateClustersAndSpawn(
+      bool doClusters,
+      Dictionary<ClientSidePrimitive, bool> primitives,
+      Dictionary<ClientSideLight, bool> lights,
+      float distance,
+      List<string> excludedUnspawnObjects,
+      float maxDistanceForPrimitiveCluster,
+      int maxPrimitivesPerCluster)
     {
       if (!doClusters)
       {
+        Logger.Info("pas cluster ?");
         foreach (ClientSidePrimitive primitive in primitives.Keys)
         {
           nonClusteredPrimitives.Add(primitive);
         }
+        foreach (ClientSideLight light in lights.Keys)
+        {
+          nonClusteredLights.Add(light);
+        }
       }
       else
       {
+        List<ClientSideLight> clusteredLights = new();
 
+        foreach (ClientSideLight light in lights.Keys.ToList())
+        {
+          if (!lights[light])
+          {
+            nonClusteredLights.Add(light);
+            lights.Remove(light);
+          }
+          else
+          {
+            clusteredLights.Add(light);
+          }
+        }
+        
         // Remove non clustered primitives and big objects
         foreach (ClientSidePrimitive primitive in primitives.Keys.ToList())
         {
@@ -184,6 +222,51 @@ namespace MEROptimizer.Application.Components
 
             primitiveClusters.Add(primitiveCluster);
           }
+          
+          foreach (ClientSideLight light in clusteredLights)
+          {
+            PrimitiveCluster nearestCluster = null;
+            float nearestDistance = float.MaxValue;
+
+            foreach (PrimitiveCluster cluster in primitiveClusters)
+            {
+              if (cluster == null)
+                continue;
+
+              Vector3 clusterCenter = cluster.transform.position - new Vector3(0, 2000, 0);
+              float distanceToCluster = Vector3.Distance(light.position, clusterCenter);
+
+              if (distanceToCluster < nearestDistance)
+              {
+                nearestDistance = distanceToCluster;
+                nearestCluster = cluster;
+              }
+            }
+
+            if (nearestCluster != null && nearestDistance <= maxDistanceForPrimitiveCluster * 2f)
+            {
+              nearestCluster.lights.Add(light);
+            }
+            else
+            {
+              GameObject gameObject = new GameObject($"[MERO] LightCluster_{schematic.name}_{primitiveClusters.Count + 1}");
+
+              gameObject.transform.position = light.position + new Vector3(0, 2000, 0);
+              gameObject.transform.rotation = Quaternion.identity;
+              gameObject.transform.localScale = Vector3.one;
+
+              SphereCollider collider = gameObject.AddComponent<SphereCollider>();
+              collider.radius = distance;
+              collider.isTrigger = true;
+
+              PrimitiveCluster lightCluster = gameObject.AddComponent<PrimitiveCluster>();
+              lightCluster.id = primitiveClusters.Count + 1;
+              lightCluster.primitives = new List<ClientSidePrimitive>();
+              lightCluster.lights = new List<ClientSideLight> { light };
+
+              primitiveClusters.Add(lightCluster);
+            }
+          }
         }
       }
 
@@ -193,37 +276,31 @@ namespace MEROptimizer.Application.Components
       {
         primitive.SpawnForEveryone();
       }
+      
+      foreach (ClientSideLight light in nonClusteredLights)
+      {
+        light.SpawnForEveryone();
+      }
 
 
       // Spawn clusters for custom chiantos roles
 
       Timing.CallDelayed(.5f, () =>
       {
-
         if (this == null) return;
 
         foreach (Player player in Player.List.Where(p => p != null && !p.IsNpc))
         {
           bool shouldSpawn = false;
 
-          // Tutorials if config is enabled
           if (!Application.MEROptimizer.ShouldTutorialsBeAffectedByDistanceSpawning && player.Role == RoleTypeId.Tutorial)
-          {
             shouldSpawn = true;
-          }
 
-          // Spectators if config is enabled
           if (!Application.MEROptimizer.shouldSpectatorsBeAffectedByPDS && (player.Role == RoleTypeId.Spectator || player.Role == RoleTypeId.Overwatch))
-          {
             shouldSpawn = true;
-          }
 
-          // Theses role always see all of the maps
           if (player.Role == RoleTypeId.Filmmaker || player.Role == RoleTypeId.Scp079)
-          {
             shouldSpawn = true;
-          }
-
 
           if (shouldSpawn)
           {
@@ -235,12 +312,11 @@ namespace MEROptimizer.Application.Components
               }
               else
               {
-                cluster.awaitingSpawn.Remove(player);
-                cluster.awaitingSpawn.Add(player, cluster.primitives.ToList());
+                // CORRECTION : On initialise l'index à 0 pour lancer le process d'Update
+                cluster.awaitingSpawnIndex[player] = 0;
                 cluster.spawning = true;
               }
             }
-
           }
         }
       });
@@ -253,6 +329,11 @@ namespace MEROptimizer.Application.Components
       foreach (ClientSidePrimitive primitive in nonClusteredPrimitives)
       {
         primitive.SpawnClientPrimitive(player);
+      }
+      
+      foreach (ClientSideLight light in nonClusteredLights)
+      {
+        light.SpawnClientLight(player);
       }
       MEROptimizer.Debug($"Refresh the schematic {this.schematicName} for {player.DisplayName} !");
     }
@@ -268,6 +349,11 @@ namespace MEROptimizer.Application.Components
       foreach (ClientSidePrimitive primitive in nonClusteredPrimitives)
       {
         primitive.DestroyClientPrimitive(player);
+      }
+      
+      foreach (ClientSideLight light in nonClusteredLights)
+      {
+        light.DestroyClientLight(player);
       }
     }
 
@@ -291,6 +377,10 @@ namespace MEROptimizer.Application.Components
       {
         primitive.SpawnClientPrimitive(player);
       }
+      foreach (ClientSideLight light in nonClusteredLights)
+      {
+        light.SpawnClientLight(player);
+      }
     }
 
     public void Destroy()
@@ -303,6 +393,10 @@ namespace MEROptimizer.Application.Components
       foreach (ClientSidePrimitive primitive in nonClusteredPrimitives)
       {
         primitive.DestroyForEveryone();
+      }
+      foreach (ClientSideLight light in nonClusteredLights)
+      {
+        light.DestroyForEveryone();
       }
 
       foreach (PrimitiveCluster cluster in primitiveClusters.Where(c => c != null && c.gameObject != null))
