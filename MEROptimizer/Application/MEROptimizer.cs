@@ -11,7 +11,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-using System.Xml.Linq;
 using UnityEngine;
 using UnityEngine.Assertions.Must;
 using LabApi.Features.Wrappers;
@@ -712,22 +711,18 @@ namespace MEROptimizer.Application
         //ev.Schematic._attachedBlocks.Remove(primitive.gameObject);
         GameObject.Destroy(light.gameObject);
       }
-      Timing.CallDelayed(1f, () =>
-      {
 
+      string schematicName = ev.Schematic.Name;
+      int cleanupPass = 0;
+      int totalRemoved = 0;
+      void RunCleanupPass()
+      {
         if (ev.Schematic == null || schematic == null) return;
-        schematic.schematicServerSidePrimitiveCount = ev.Schematic.GetComponentsInChildren<PrimitiveObjectToy>().Where(p => p != null).Count();
-        schematic.schematicServerSidePrimitiveEmptiesCount = ev.Schematic.GetComponentsInChildren<PrimitiveObjectToy>().Where(p => p != null && p.PrimitiveFlags == PrimitiveFlags.None).Count();
 
         int removed = 0;
-
-        var empties = ev.Schematic.GetComponentsInChildren<PrimitiveObjectToy>(true);
-
-        foreach (var primitive in empties)
+        foreach (var primitive in ev.Schematic.GetComponentsInChildren<PrimitiveObjectToy>(true))
         {
-          if (primitive == null)
-            continue;
-
+          if (primitive == null) continue;
           if (primitive.PrimitiveFlags == PrimitiveFlags.None && primitive.transform.childCount == 0)
           {
             GameObject.Destroy(primitive.gameObject);
@@ -735,8 +730,25 @@ namespace MEROptimizer.Application
           }
         }
 
-        Logger.Info($"[MERO] Cleaned {removed} empty pivots (no children)");
-      });
+        totalRemoved += removed;
+        cleanupPass++;
+
+        if (removed > 0 && cleanupPass < 30)
+        {
+          Timing.CallDelayed(0.1f, RunCleanupPass);
+        }
+        else
+        {
+          int remaining = ev.Schematic == null ? 0
+            : ev.Schematic.GetComponentsInChildren<PrimitiveObjectToy>().Where(p => p != null).Count();
+          schematic.schematicServerSidePrimitiveCount = remaining;
+          schematic.schematicServerSidePrimitiveEmptiesCount = ev.Schematic == null ? 0
+            : ev.Schematic.GetComponentsInChildren<PrimitiveObjectToy>().Where(p => p != null && p.PrimitiveFlags == PrimitiveFlags.None).Count();
+          Logger.Info($"[MERO] {schematicName}: pivot cleanup done in {cleanupPass} pass(es) — {totalRemoved} destroyed, {remaining} remaining");
+        }
+      }
+
+      Timing.CallDelayed(1f, RunCleanupPass);
 
       //DestroyPrimitives(ev.Schematic, primitivesToDestroy);
 
