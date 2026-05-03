@@ -20,8 +20,7 @@ public class CountPrimCommand : ICommand
         
         foreach (var aa in UnityEngine.Object.FindObjectsOfType<AdminToys.PrimitiveObjectToy>())
         {
-            Logger.Info($"PrimitiveObjectToy trouvé: {aa.name}");
-            aa.NetworkPrimitiveFlags = PrimitiveFlags.Visible;
+            total++;
         }
 
         response += $"PrimitiveObjectToy serveur trouvées: {total}";

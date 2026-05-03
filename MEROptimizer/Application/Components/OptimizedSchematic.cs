@@ -23,6 +23,7 @@ namespace MEROptimizer.Application.Components
 
     public List<ClientSidePrimitive> nonClusteredPrimitives { get; set; }
     public List<ClientSideLight> nonClusteredLights { get; set; }
+    public List<ClientSideCapybara> nonClusteredCapybaras { get; set; }
 
     public List<PrimitiveCluster> primitiveClusters { get; set; }
 
@@ -49,6 +50,7 @@ namespace MEROptimizer.Application.Components
       List<Collider> colliders,
       Dictionary<ClientSidePrimitive, bool> primitives,
       Dictionary<ClientSideLight, bool> lights,
+      Dictionary<ClientSideCapybara, bool> capybaras,
       bool doClusters = false,
       float distance = 50,
       List<string> excludedUnspawnObjects = null,
@@ -69,6 +71,7 @@ namespace MEROptimizer.Application.Components
         doClusters,
         primitives,
         lights,
+        capybaras,
         distance,
         excludedUnspawnObjects,
         maxDistanceForPrimitiveCluster,
@@ -79,6 +82,7 @@ namespace MEROptimizer.Application.Components
       bool doClusters,
       Dictionary<ClientSidePrimitive, bool> primitives,
       Dictionary<ClientSideLight, bool> lights,
+      Dictionary<ClientSideCapybara, bool> capybaras,
       float distance,
       List<string> excludedUnspawnObjects,
       float maxDistanceForPrimitiveCluster,
@@ -95,6 +99,10 @@ namespace MEROptimizer.Application.Components
         {
           nonClusteredLights.Add(light);
         }
+        foreach (ClientSideCapybara capybara in capybaras.Keys)
+        {
+          nonClusteredCapybaras.Add(capybara);
+        }
       }
       else
       {
@@ -110,6 +118,21 @@ namespace MEROptimizer.Application.Components
           else
           {
             clusteredLights.Add(light);
+          }
+        }
+        
+        List<ClientSideCapybara> clusteredCapybaras = new();
+
+        foreach (ClientSideCapybara capybara in capybaras.Keys.ToList())
+        {
+          if (!capybaras[capybara])
+          {
+            nonClusteredCapybaras.Add(capybara);
+            capybaras.Remove(capybara);
+          }
+          else
+          {
+            clusteredCapybaras.Add(capybara);
           }
         }
         

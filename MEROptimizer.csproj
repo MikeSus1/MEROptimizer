@@ -52,7 +52,9 @@
     <Compile Include="MEROptimizer\Application\Commands\RealTimePrimitiveCountCmd.cs" />
     <Compile Include="MEROptimizer\Application\Commands\InfoCmd.cs" />
     <Compile Include="MEROptimizer\Application\Commands\DisplayPrimitivesCmd.cs" />
+    <Compile Include="MEROptimizer\Application\Commands\TestCapyCommand.cs" />
     <Compile Include="MEROptimizer\Application\Commands\TestLightCommand.cs" />
+    <Compile Include="MEROptimizer\Application\Components\ClientSideCapybara.cs" />
     <Compile Include="MEROptimizer\Application\Components\ClientSideLight.cs" />
     <Compile Include="MEROptimizer\Application\Components\ClientSidePrimitive.cs" />
     <Compile Include="MEROptimizer\Application\Components\OptimizedSchematic.cs" />

@@ -11,6 +11,7 @@ namespace MEROptimizer.Application.Components
         public int id { get; set; }
         public List<ClientSidePrimitive> primitives { get; set; }
         public List<ClientSideLight> lights = new();
+        public List<ClientSideCapybara> capybaras = new();
         public ClientSidePrimitive displayClusterPrimitive { get; set; }
 
         // OPTIMISATION GC : Au lieu de stocker une copie de la liste complète (qui explose la RAM), 
@@ -54,6 +55,9 @@ namespace MEROptimizer.Application.Components
 
             foreach (ClientSideLight light in lights)
                 light.DestroyForEveryone();
+            
+            foreach (ClientSideCapybara capybara in capybaras)
+                capybara.DestroyForEveryone();
 
             displayClusterPrimitive?.DestroyForEveryone();
         }

@@ -18,6 +18,7 @@ using LabApi.Features.Wrappers;
 using ProjectMER.Events.Arguments;
 using ProjectMER.Features.Objects;
 using ProjectMER.Events.Handlers;
+using CapybaraToy = AdminToys.CapybaraToy;
 using LightSourceToy = AdminToys.LightSourceToy;
 #if EXILED
 using Exiled.Events.EventArgs.Player;
@@ -28,6 +29,7 @@ namespace MEROptimizer.Application
   {
     public static uint PrimitiveAssetId;
     public static uint LightAssetId;
+    public static uint CapybaraAssetId;
 
     private bool excludeCollidables;
 
@@ -180,6 +182,44 @@ namespace MEROptimizer.Application
 
       return lights;
     }
+    
+    Dictionary<CapybaraToy, bool> GetCapybaraToOptimize(
+      Transform parent,
+      List<Transform> parentToExclude,
+      Dictionary<CapybaraToy, bool> capybaras = null,
+      bool clusterChilds = true)
+    {
+      capybaras ??= new Dictionary<CapybaraToy, bool>();
+
+      for (int i = 0; i < parent.childCount; i++)
+      {
+        Transform child = parent.GetChild(i);
+        if (child == null || parentToExclude.Contains(child))
+          continue;
+
+        if (clusterChilds)
+        {
+          foreach (string name in excludedNamesForUnspawningDistantObjects)
+          {
+            if (child.name.Contains(name))
+            {
+              clusterChilds = false;
+              break;
+            }
+          }
+        }
+
+        if (excludedNames.Any(n => child.name.ToLower().Contains(n.ToLower())))
+          continue;
+
+        if (child.TryGetComponent(out CapybaraToy capybaraToy))
+          capybaras.Add(capybaraToy, clusterChilds);
+
+        GetCapybaraToOptimize(child, parentToExclude, capybaras, clusterChilds);
+      }
+
+      return capybaras;
+    }
 
     Dictionary<PrimitiveObjectToy, bool> GetPrimitivesToOptimize(Transform parent, List<Transform> parentToExclude,
       Dictionary<PrimitiveObjectToy, bool> primitives = null, bool clusterChilds = true)
@@ -287,22 +327,23 @@ namespace MEROptimizer.Application
         if (prefab.TryGetComponent<PrimitiveObjectToy>(out _))
         {
           PrimitiveAssetId = prefab.GetComponent<NetworkIdentity>().assetId;
-          Logger.Debug("PrimitiveObjectToy AssetId successfully found.");
+          Logger.Info("PrimitiveObjectToy AssetId successfully found.");
         }
 
         if (prefab.TryGetComponent<LightSourceToy>(out _))
         {
           LightAssetId = prefab.GetComponent<NetworkIdentity>().assetId;
-          Logger.Debug("LightSourceToy AssetId successfully found.");
+          Logger.Info("LightSourceToy AssetId successfully found.");
+        }
+        
+        if (prefab.TryGetComponent<CapybaraToy>(out _))
+        {
+          CapybaraAssetId = prefab.GetComponent<NetworkIdentity>().assetId;
+          Logger.Info("CapybaraToy AssetId successfully found.");
         }
 
-        if (PrimitiveAssetId != 0 && LightAssetId != 0)
+        if (PrimitiveAssetId != 0 && LightAssetId != 0 && CapybaraAssetId != 0)
           break;
-      }
-
-      if (PrimitiveAssetId == 0)
-      {
-          Logger.Error("Could not find the PrimitiveObjectToy prefab! Client-side primitives will fail to spawn.");
       }
     }
 
@@ -524,14 +565,16 @@ namespace MEROptimizer.Application
 
       Dictionary<PrimitiveObjectToy, bool> primitivesToOptimize = GetPrimitivesToOptimize(ev.Schematic.transform, parentsToExlude);
       Dictionary<LightSourceToy, bool> lightsToOptimize = GetLightsToOptimize(ev.Schematic.transform, parentsToExlude);
+      Dictionary<CapybaraToy, bool> capybaraToOptimize = GetCapybaraToOptimize(ev.Schematic.transform, parentsToExlude);
 
       bool hasPrimitives = primitivesToOptimize != null && primitivesToOptimize.Count > 0;
       bool hasLights = lightsToOptimize != null && lightsToOptimize.Count > 0;
+      bool hasCapybaras = capybaraToOptimize != null && capybaraToOptimize.Count > 0;
 
       Logger.Info($"[MERO] {ev.Schematic.Name}: primitives={primitivesToOptimize?.Count ?? 0}, lights={lightsToOptimize?.Count ?? 0}");
 
       
-      if (!hasPrimitives && !hasLights)
+      if (!hasPrimitives && !hasLights && !hasCapybaras)
         return;
 
       Dictionary<ClientSidePrimitive, bool> clientSidePrimitive = new Dictionary<ClientSidePrimitive, bool>();
@@ -606,6 +649,29 @@ namespace MEROptimizer.Application
 
         lightsToDestroy.Add(light);
       }
+      
+      Dictionary<ClientSideCapybara, bool> clientSideCapybaras = new Dictionary<ClientSideCapybara, bool>();
+      List<CapybaraToy> capybarasToDestroy = new List<CapybaraToy>();
+
+      foreach (CapybaraToy capybara in capybaraToOptimize.Keys.ToList())
+      {
+        if (capybara == null)
+          continue;
+
+        Vector3 position = capybara.transform.position;
+        Quaternion rotation = capybara.transform.rotation;
+        Vector3 scale = capybara.transform.lossyScale;
+
+        clientSideCapybaras.Add(new ClientSideCapybara(
+          position,
+          rotation,
+          scale,
+          capybara.CollisionsEnabled,
+          0
+        ), capybaraToOptimize[capybara]);
+
+        capybarasToDestroy.Add(capybara);
+      }
 
       // Store the client side primitive / server side colliders
 
@@ -621,6 +687,7 @@ namespace MEROptimizer.Application
         serverSideColliders,
         clientSidePrimitive,
         clientSideLights,
+        clientSideCapybaras,
         hideDistantPrimitives,
         distanceForClusterSpawn,
         excludedNamesForUnspawningDistantObjects,
@@ -661,8 +728,7 @@ namespace MEROptimizer.Application
           if (primitive == null)
             continue;
 
-          if (primitive.PrimitiveFlags == PrimitiveFlags.None &&
-              primitive.transform.childCount == 0)
+          if (primitive.PrimitiveFlags == PrimitiveFlags.None && primitive.transform.childCount == 0)
           {
             GameObject.Destroy(primitive.gameObject);
             removed++;
@@ -670,7 +736,6 @@ namespace MEROptimizer.Application
         }
 
         Logger.Info($"[MERO] Cleaned {removed} empty pivots (no children)");
-        
       });
 
       //DestroyPrimitives(ev.Schematic, primitivesToDestroy);
