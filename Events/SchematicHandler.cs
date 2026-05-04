@@ -71,6 +71,15 @@ public class SchematicHandler
         
         DestroyOriginals(primitivesToOptimize.Keys, lightsToOptimize.Keys, capybaraToOptimize.Keys);
         
+        Timing.CallDelayed(1f, () =>
+        {
+
+            if (ev.Schematic == null || ev.Schematic == null) return;
+            optimized.schematicServerSidePrimitiveCount = ev.Schematic.GetComponentsInChildren<PrimitiveObjectToy>().Where(p => p != null).Count();
+            optimized.schematicServerSidePrimitiveEmptiesCount = ev.Schematic.GetComponentsInChildren<PrimitiveObjectToy>().Where(p => p != null && p.PrimitiveFlags == PrimitiveFlags.None).Count();
+
+        });
+        
         Timing.RunCoroutine(RunCleanupPass(ev.Schematic, optimized));
     }
 
@@ -154,7 +163,7 @@ public class SchematicHandler
 
     private IEnumerator<float> RunCleanupPass(SchematicObject schematicObj, OptimizedSchematic opt)
     {
-        yield return Timing.WaitForSeconds(1f);
+        yield return Timing.WaitForSeconds(0.1f);
         int total = 0;
         for (int pass = 0; pass < 30; pass++)
         {
