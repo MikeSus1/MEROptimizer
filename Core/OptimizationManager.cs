@@ -55,7 +55,6 @@ namespace MEROptimizer.Core
         public void AddPlayerTrigger(Player player)
         {
             if (player == null) return;
-            Logger.Info($"Adding PlayerTrigger to {player.Nickname}");
             
             GameObject playerTrigger = new GameObject($"{player.PlayerId}_MERO_TRIGGER");
             playerTrigger.tag = "Player";

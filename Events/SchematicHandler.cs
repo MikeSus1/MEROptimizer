@@ -45,8 +45,6 @@ public class SchematicHandler
         CollectToOptimize(ev.Schematic.transform, parentsToExclude, capybaraToOptimize, true);
 
         if (primitivesToOptimize.Count == 0 && lightsToOptimize.Count == 0 && capybaraToOptimize.Count == 0) return;
-
-        Logger.Info($"[MERO] {ev.Schematic.Name}: Prims={primitivesToOptimize.Count}, Lights={lightsToOptimize.Count}, Capys={capybaraToOptimize.Count}");
         
         var clientPrims = ProcessPrimitives(primitivesToOptimize, out List<Collider> colliders);
         var clientLights = ProcessLights(lightsToOptimize);
@@ -175,6 +173,5 @@ public class SchematicHandler
             foreach (var t in targets) { GameObject.Destroy(t.gameObject); total++; }
             yield return Timing.WaitForSeconds(0.1f);
         }
-        Logger.Info($"[MERO] Cleanup finished: {total} empty pivots removed.");
     }
 }

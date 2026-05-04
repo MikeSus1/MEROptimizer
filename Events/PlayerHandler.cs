@@ -23,7 +23,6 @@ public class PlayerHandler : CustomEventsHandler
     {
         foreach (OptimizedSchematic schematic in _manager.optimizedSchematics.Where(s => s?.schematic != null))
         {
-            Logger.Info($"Spawning clusters for {player.Nickname}: {logReason}");
             foreach (var cluster in schematic.primitiveClusters)
             {
                 if (cluster.instantSpawn)
