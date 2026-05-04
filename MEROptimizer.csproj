@@ -12,7 +12,7 @@
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <Deterministic>true</Deterministic>
-    <LangVersion>14</LangVersion>
+    <LangVersion>13</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -32,38 +32,30 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)' == 'ReleaseEXILED|AnyCPU'">
-    <OutputPath>bin\ReleaseEXILED\</OutputPath>
-    <DefineConstants>TRACE;EXILED</DefineConstants>
-    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Optimize>true</Optimize>
-    <DebugType>pdbonly</DebugType>
-    <PlatformTarget>AnyCPU</PlatformTarget>
-    <LangVersion>7.3</LangVersion>
-    <ErrorReport>prompt</ErrorReport>
+    <PlatformTarget>x64</PlatformTarget>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="MEROptimizer\Application\Commands\ClusterInfoCmd.cs" />
-    <Compile Include="MEROptimizer\Application\Commands\CountLightsCommand.cs" />
-    <Compile Include="MEROptimizer\Application\Commands\CountPrimCommand.cs" />
-    <Compile Include="MEROptimizer\Application\Commands\DisablePluginCmd.cs" />
-    <Compile Include="MEROptimizer\Application\Commands\DisplayClustersCmd.cs" />
-    <Compile Include="MEROptimizer\Application\Commands\RealTimePrimitiveCountCmd.cs" />
-    <Compile Include="MEROptimizer\Application\Commands\InfoCmd.cs" />
-    <Compile Include="MEROptimizer\Application\Commands\DisplayPrimitivesCmd.cs" />
-    <Compile Include="MEROptimizer\Application\Commands\TestCapyCommand.cs" />
-    <Compile Include="MEROptimizer\Application\Commands\TestLightCommand.cs" />
-    <Compile Include="MEROptimizer\Application\Components\ClientSideCapybara.cs" />
-    <Compile Include="MEROptimizer\Application\Components\ClientSideLight.cs" />
-    <Compile Include="MEROptimizer\Application\Components\ClientSidePrimitive.cs" />
-    <Compile Include="MEROptimizer\Application\Components\OptimizedSchematic.cs" />
-    <Compile Include="MEROptimizer\Application\Components\PlayerDisplayHint.cs" />
-    <Compile Include="MEROptimizer\Application\Components\PlayerTrigger.cs" />
-    <Compile Include="MEROptimizer\Application\Components\PrimitiveCluster.cs" />
-    <Compile Include="MEROptimizer\Application\MEROptimizer.cs" />
-    <Compile Include="MEROptimizer\Config.cs" />
-    <Compile Include="MEROptimizer\Plugin.cs" />
+    <Compile Include="API\ClientSideObjects\ClientSideCapybara.cs" />
+    <Compile Include="API\ClientSideObjects\ClientSideLight.cs" />
+    <Compile Include="API\ClientSideObjects\ClientSidePrimitive.cs" />
+    <Compile Include="Commands\ClusterInfoCmd.cs" />
+    <Compile Include="Commands\DisablePluginCmd.cs" />
+    <Compile Include="Commands\DisplayClustersCmd.cs" />
+    <Compile Include="Commands\DisplayPrimitivesCmd.cs" />
+    <Compile Include="Commands\InfoCmd.cs" />
+    <Compile Include="Commands\RealTimePrimitiveCountCmd.cs" />
+    <Compile Include="Components\ClientObject.cs" />
+    <Compile Include="Components\OptimizedSchematic.cs" />
+    <Compile Include="Components\PlayerDisplayHint.cs" />
+    <Compile Include="Components\PlayerTrigger.cs" />
+    <Compile Include="Components\PrimitiveCluster.cs" />
+    <Compile Include="Config.cs" />
+    <Compile Include="Core\OptimizationManager.cs" />
+    <Compile Include="Events\PlayerHandler.cs" />
+    <Compile Include="Events\SchematicHandler.cs" />
+    <Compile Include="Events\ServerHandler.cs" />
+    <Compile Include="Helper\PrefabHelper.cs" />
+    <Compile Include="Plugin.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
   </ItemGroup>
   <ItemGroup>
@@ -74,7 +66,6 @@
     <Reference Include="CommandSystem.Core" HintPath="$(HEAVEN_REFERENCES)\CommandSystem.Core.dll" Private="false" />
     <Reference Include="HintServiceMeow" HintPath="$(HEAVEN_REFERENCES)\HintServiceMeow.dll" Private="false" />
     <Reference Include="LabApi" HintPath="$(HEAVEN_REFERENCES)\LabApi.dll" Private="false" />
-    <Reference Include="MEROptimizer" HintPath="$(HEAVEN_REFERENCES)\MEROptimizer.dll" Private="false" />
     <Reference Include="Mirror" HintPath="$(HEAVEN_REFERENCES)\Mirror-Publicized.dll" Private="false" />
     <Reference Include="NorthwoodLib" HintPath="$(HEAVEN_REFERENCES)\NorthwoodLib.dll" Private="false" />
     <Reference Include="Pooling" HintPath="$(HEAVEN_REFERENCES)\Pooling.dll" Private="false" />

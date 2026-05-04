@@ -1,13 +1,12 @@
-﻿using CommandSystem;
-using LabApi.Features.Wrappers;
-using MEC;
-using MEROptimizer.Application.Components;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
+using CommandSystem;
+using LabApi.Features.Wrappers;
+using MEC;
+using MEROptimizer.Components;
 
-namespace MEROptimizer.Application.Commands
+namespace MEROptimizer.Commands
 {
   [CommandHandler(typeof(RemoteAdminCommandHandler))]
   public class DisplayPrimitivesCmd : ICommand, IUsageProvider
@@ -42,7 +41,7 @@ namespace MEROptimizer.Application.Commands
 
       List<OptimizedSchematic> hiddenSchematics = new List<OptimizedSchematic>();
 
-      foreach (OptimizedSchematic optimizedSchematic in Plugin.merOptimizer.optimizedSchematics)
+      foreach (OptimizedSchematic optimizedSchematic in Plugin.Instance.Manager.optimizedSchematics)
       {
         if (display) hiddenSchematics.Add(optimizedSchematic);
         optimizedSchematic.HideFor(player);

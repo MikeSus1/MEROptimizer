@@ -1,20 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 
 namespace MEROptimizer
 {
-#if EXILED
-  public sealed class Config : IConfig
-  {
-#else
   public class Config
   {
-#endif
-    
     public bool IsEnabled { get; set; } = true;
     
     public bool Debug { get; set; }

@@ -1,10 +1,12 @@
-﻿using AdminToys;
-using LabApi.Features.Wrappers;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
+using AdminToys;
+using LabApi.Features.Wrappers;
+using MEROptimizer.API.ClientSideObjects;
+using MEROptimizer.Components.ClientSideObjects;
 using UnityEngine;
 
-namespace MEROptimizer.Application.Components
+namespace MEROptimizer.Components
 {
     public class PrimitiveCluster : MonoBehaviour
     {
@@ -31,16 +33,18 @@ namespace MEROptimizer.Application.Components
 
         public void Start()
         {
-            instantSpawn = MEROptimizer.numberOfPrimitivePerSpawn == 0;
+            var manager = Plugin.Instance.Manager;
+            
+            instantSpawn = manager.numberOfPrimitivePerSpawn == 0;
 
-            if (MEROptimizer.numberOfPrimitivePerSpawn > 0 && MEROptimizer.numberOfPrimitivePerSpawn < 1)
+            if (manager.numberOfPrimitivePerSpawn > 0 && manager.numberOfPrimitivePerSpawn < 1)
             {
-                numberOfPrimitivePerSpawn = Mathf.CeilToInt(MEROptimizer.numberOfPrimitivePerSpawn * 10);
+                numberOfPrimitivePerSpawn = Mathf.CeilToInt(manager.numberOfPrimitivePerSpawn * 10);
                 multiFrameSpawn = true;
             }
             else
             {
-                numberOfPrimitivePerSpawn = Mathf.CeilToInt(MEROptimizer.numberOfPrimitivePerSpawn);
+                numberOfPrimitivePerSpawn = Mathf.CeilToInt(manager.numberOfPrimitivePerSpawn);
             }
 
             float radius = this.GetComponent<SphereCollider>().radius;
@@ -69,7 +73,7 @@ namespace MEROptimizer.Application.Components
 
             Player player = playerTrigger.player;
             if (player == null || player.Role == PlayerRoles.RoleTypeId.Filmmaker) return;
-            if (!Application.MEROptimizer.ShouldTutorialsBeAffectedByDistanceSpawning && player.Role == PlayerRoles.RoleTypeId.Tutorial) return;
+            if (!Plugin.Instance.Manager.ShouldTutorialsBeAffectedByDistanceSpawning && player.Role == PlayerRoles.RoleTypeId.Tutorial) return;
 
             if (!player.IsNpc)
             {
@@ -122,23 +126,23 @@ namespace MEROptimizer.Application.Components
                 List<Player> spectators = player.CurrentSpectators.ToList();
 
                 for (int i = startIndex; i < endIndex; i++)
-                    primitives[i].SpawnClientPrimitive(player);
+                    primitives[i].SpawnForPlayer(player);
 
                 foreach (Player spec in spectators)
                 {
                     for (int i = startIndex; i < endIndex; i++)
-                        primitives[i].SpawnClientPrimitive(spec);
+                        primitives[i].SpawnForPlayer(spec);
                 }
 
                 if (endIndex >= primitives.Count)
                 {
                     foreach (ClientSideLight light in lights)
-                        light.SpawnClientLight(player);
+                        light.SpawnForPlayer(player);
 
                     foreach (Player spec in spectators)
                     {
                         foreach (ClientSideLight light in lights)
-                            light.SpawnClientLight(spec);
+                            light.SpawnForPlayer(spec);
                     }
 
                     awaitingSpawnIndex.Remove(player);
@@ -161,7 +165,7 @@ namespace MEROptimizer.Application.Components
 
             Player player = playerTrigger.player;
             if (player == null || player.Role == PlayerRoles.RoleTypeId.Filmmaker) return;
-            if (!Application.MEROptimizer.ShouldTutorialsBeAffectedByDistanceSpawning && player.Role == PlayerRoles.RoleTypeId.Tutorial) return;
+            if (!Plugin.Instance.Manager.ShouldTutorialsBeAffectedByDistanceSpawning && player.Role == PlayerRoles.RoleTypeId.Tutorial) return;
 
             awaitingSpawnIndex.Remove(player);
             UnspawnFor(player);
@@ -175,12 +179,12 @@ namespace MEROptimizer.Application.Components
             // Le batching est respecté ici (envoi à la chaîne sur la même connexion)
             foreach (ClientSidePrimitive primitive in primitives)
             {
-                primitive.SpawnClientPrimitive(player);
+                primitive.SpawnForPlayer(player);
             }
             
             foreach (ClientSideLight light in lights)
             {
-                light.SpawnClientLight(player);
+                light.SpawnForPlayer(player);
             }
         }
 
@@ -189,22 +193,22 @@ namespace MEROptimizer.Application.Components
             if (player == null || player.IsNpc) return;
 
             foreach (ClientSidePrimitive primitive in primitives)
-                primitive.DestroyClientPrimitive(player);
+                primitive.DestroyForPlayer(player);
 
             foreach (ClientSideLight light in lights)
-                light.DestroyClientLight(player);
+                light.DestroyForPlayer(player);
 
             foreach (Player p in player.CurrentSpectators)
             {
                 foreach (ClientSidePrimitive primitive in primitives)
-                    primitive.DestroyClientPrimitive(p);
+                    primitive.DestroyForPlayer(p);
 
                 foreach (ClientSideLight light in lights)
-                    light.DestroyClientLight(p);
+                    light.DestroyForPlayer(p);
             }
         }
 
-        public void DisplayRadius(Player player) => displayClusterPrimitive?.SpawnClientPrimitive(player);
-        public void HideRadius(Player player) => displayClusterPrimitive?.DestroyClientPrimitive(player);
+        public void DisplayRadius(Player player) => displayClusterPrimitive?.SpawnForPlayer(player);
+        public void HideRadius(Player player) => displayClusterPrimitive?.DestroyForPlayer(player);
     }
 }

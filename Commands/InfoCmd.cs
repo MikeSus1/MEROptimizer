@@ -1,12 +1,9 @@
-﻿using CommandSystem;
+﻿using System;
+using CommandSystem;
 using LabApi.Features.Wrappers;
-using MEROptimizer.Application.Components;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+using MEROptimizer.Components;
 
-namespace MEROptimizer.Application.Commands
+namespace MEROptimizer.Commands
 {
   [CommandHandler(typeof(RemoteAdminCommandHandler))]
   public class InfoCmd : ICommand
@@ -30,7 +27,7 @@ namespace MEROptimizer.Application.Commands
       int serverSidePrimitives = 0;
       int clientSidePrimitives = 0;
 
-      foreach (OptimizedSchematic os in Plugin.merOptimizer.optimizedSchematics)
+      foreach (OptimizedSchematic os in Plugin.Instance.Manager.optimizedSchematics)
       {
         serverSidePrimitives += os.schematicServerSidePrimitiveCount;
         clientSidePrimitives += os.GetTotalPrimitiveCount();
@@ -41,7 +38,7 @@ namespace MEROptimizer.Application.Commands
         $"Total of primitives {serverSidePrimitives + clientSidePrimitives}" +
         $"\n----------------\n";
 
-      foreach (OptimizedSchematic os in Plugin.merOptimizer.optimizedSchematics)
+      foreach (OptimizedSchematic os in Plugin.Instance.Manager.optimizedSchematics)
       {
         message +=
           $"Schematic : {os.schematic.name}\n" +

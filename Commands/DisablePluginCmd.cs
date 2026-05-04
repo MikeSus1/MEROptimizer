@@ -1,11 +1,7 @@
-﻿using CommandSystem;
-using MEROptimizer.Application.Components;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
+﻿using System;
+using CommandSystem;
 
-namespace MEROptimizer.Application.Commands
+namespace MEROptimizer.Commands
 {
   [CommandHandler(typeof(RemoteAdminCommandHandler))]
   public class DisablePluginCmd : ICommand
@@ -18,9 +14,9 @@ namespace MEROptimizer.Application.Commands
 
     public bool Execute(ArraySegment<string> arguments, ICommandSender sender, out string response)
     {
-      MEROptimizer.isDynamiclyDisabled = !MEROptimizer.isDynamiclyDisabled;
+      Plugin.Instance.Manager.isDynamiclyDisabled = !Plugin.Instance.Manager.isDynamiclyDisabled;
 
-      response = $"New spawned schematics {(MEROptimizer.isDynamiclyDisabled ? "<color=red>will not" : "<color=green>will")}</color> be optimized !";
+      response = $"New spawned schematics {(Plugin.Instance.Manager.isDynamiclyDisabled ? "<color=red>will not" : "<color=green>will")}</color> be optimized !";
 
       return true;
     }

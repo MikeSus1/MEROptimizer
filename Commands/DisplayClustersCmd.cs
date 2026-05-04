@@ -1,12 +1,10 @@
-﻿using CommandSystem;
-using LabApi.Features.Wrappers;
-using MEROptimizer.Application.Components;
-using System;
-using System.Collections.Generic;
+﻿using System;
 using System.Linq;
-using System.Text;
+using CommandSystem;
+using LabApi.Features.Wrappers;
+using MEROptimizer.Components;
 
-namespace MEROptimizer.Application.Commands
+namespace MEROptimizer.Commands
 {
   [CommandHandler(typeof(RemoteAdminCommandHandler))]
   public class DisplayClustersCmd : ICommand, IUsageProvider
@@ -39,7 +37,7 @@ namespace MEROptimizer.Application.Commands
         return false;
       }
 
-      foreach (OptimizedSchematic optimizedSchematic in Plugin.merOptimizer.optimizedSchematics)
+      foreach (OptimizedSchematic optimizedSchematic in Plugin.Instance.Manager.optimizedSchematics)
       {
         if (display)
         {

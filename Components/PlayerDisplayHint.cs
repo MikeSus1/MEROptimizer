@@ -1,12 +1,7 @@
 ﻿using LabApi.Features.Wrappers;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using UnityEngine;
 
-namespace MEROptimizer.Application.Components
+namespace MEROptimizer.Components
 {
   public class PlayerDisplayHint : MonoBehaviour
   {
@@ -30,7 +25,7 @@ namespace MEROptimizer.Application.Components
         int count = 0;
         int totalPrimitiveCount = 0;
 
-        foreach (OptimizedSchematic schematic in Plugin.merOptimizer.optimizedSchematics)
+        foreach (OptimizedSchematic schematic in Plugin.Instance.Manager.optimizedSchematics)
         {
           count += schematic.nonClusteredPrimitives.Count;
           totalPrimitiveCount += (schematic.schematicServerSidePrimitiveCount + schematic.nonClusteredPrimitives.Count);
