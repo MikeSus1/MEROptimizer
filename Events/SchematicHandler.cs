@@ -147,9 +147,9 @@ public class SchematicHandler
     }
 
     private Dictionary<ClientSideLight, bool> ProcessLights(Dictionary<LightSourceToy, bool> raw) =>
-        raw.ToDictionary(kvp => new ClientSideLight(kvp.Key.transform.position, kvp.Key.transform.rotation, kvp.Key.transform.lossyScale, 
-            kvp.Key.NetworkLightIntensity, kvp.Key.NetworkLightRange, kvp.Key.NetworkLightColor, kvp.Key.NetworkShadowType, 
-            kvp.Key.NetworkShadowStrength, kvp.Key.NetworkLightType, kvp.Key.NetworkSpotAngle, kvp.Key.NetworkInnerSpotAngle, 0), kvp => kvp.Value);
+        raw.ToDictionary(kvp => new ClientSideLight(kvp.Key.transform.position, kvp.Key.transform.rotation, kvp.Key.transform.lossyScale, kvp.Key.NetworkLightIntensity,
+            kvp.Key.NetworkLightRange, kvp.Key.NetworkLightColor, kvp.Key.NetworkShadowType, kvp.Key.NetworkShadowStrength, kvp.Key.NetworkLightShape, kvp.Key.LightType ,
+            kvp.Key.NetworkSpotAngle, kvp.Key.NetworkInnerSpotAngle, 0), kvp => kvp.Value);
 
     private Dictionary<ClientSideCapybara, bool> ProcessCapybaras(Dictionary<CapybaraToy, bool> raw) =>
         raw.ToDictionary(kvp => new ClientSideCapybara(kvp.Key.transform.position, kvp.Key.transform.rotation, kvp.Key.transform.lossyScale, kvp.Key.CollisionsEnabled, 0), kvp => kvp.Value);

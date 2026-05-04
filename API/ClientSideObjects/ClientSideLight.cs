@@ -12,15 +12,14 @@ public class ClientSideLight : ClientObject
     public int Shadows { get; set; }
     public float ShadowStrength { get; set; }
     public int Type { get; set; }
-    public int Shape { get; set; }
+    public LightShape Shape { get; set; }
     public float SpotAngle { get; set; }
     public float InnerSpotAngle { get; set; }
     public uint ParentNetId { get; set; }
 
     protected override uint AssetId => PrefabHelper.LightAssetId;
 
-    public ClientSideLight(Vector3 pos, Quaternion rot, Vector3 scale, float intensity, float range, Color color, LightShadows shadows, float shadowStrength, LightType type, float spotAngle, float innerSpotAngle, uint parentNetId) 
-        : base(pos, rot, scale)
+    public ClientSideLight(Vector3 pos, Quaternion rot, Vector3 scale, float intensity, float range, Color color, LightShadows shadows, float shadowStrength, LightShape shape, LightType type, float spotAngle, float innerSpotAngle, uint parentNetId) : base(pos, rot, scale)
     {
         Intensity = intensity;
         Range = range;
@@ -28,6 +27,7 @@ public class ClientSideLight : ClientObject
         Shadows = (int)shadows;
         ShadowStrength = shadowStrength;
         Type = (int)type;
+        Shape = shape;
         SpotAngle = spotAngle;
         InnerSpotAngle = innerSpotAngle;
         ParentNetId = parentNetId;
@@ -48,6 +48,7 @@ public class ClientSideLight : ClientObject
         writer.WriteInt(Shadows);
         writer.WriteFloat(ShadowStrength);
         writer.WriteInt(Type);
+        writer.WriteInt((int)Shape);
         writer.WriteFloat(SpotAngle);
         writer.WriteFloat(InnerSpotAngle);
         writer.WriteUInt(ParentNetId);
