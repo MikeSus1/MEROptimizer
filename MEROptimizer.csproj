@@ -85,6 +85,9 @@
     <Reference Include="YamlDotNet" HintPath="$(HEAVEN_REFERENCES)\YamlDotNet.dll" Private="false" />
     <Reference Include="BoneMapper" HintPath="$(HEAVEN_REFERENCES)\BoneMapper.dll" Private="false" />
   </ItemGroup>
+  <ItemGroup>
+    <Folder Include="API\Extensions\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <PropertyGroup>
     <PostBuildEvent>if "$(ConfigurationName)"=="ReleaseEXILED" ( xcopy "$(TargetPath)" "$(TargetDir)MEROptimizerEXILED.dll" /y)</PostBuildEvent>

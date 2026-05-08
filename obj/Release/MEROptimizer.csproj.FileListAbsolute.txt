@@ -1,0 +1,6 @@
+C:\Users\Mike\RiderProjects\MEROptimizer\bin\Release\MEROptimizer.dll
+C:\Users\Mike\RiderProjects\MEROptimizer\bin\Release\MEROptimizer.pdb
+C:\Users\Mike\RiderProjects\MEROptimizer\obj\Release\MEROptimizer.csproj.AssemblyReference.cache
+C:\Users\Mike\RiderProjects\MEROptimizer\obj\Release\MEROptimizer.csproj.CoreCompileInputs.cache
+C:\Users\Mike\RiderProjects\MEROptimizer\obj\Release\MEROptimizer.dll
+C:\Users\Mike\RiderProjects\MEROptimizer\obj\Release\MEROptimizer.pdb
